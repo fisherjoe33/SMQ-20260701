@@ -1,632 +1,767 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>深圳食安抽检数据公示</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --primary: #1a5f3f;
-            --primary-light: #2d8a5e;
-            --accent: #e8b923;
-            --danger: #d32f2f;
-            --warning: #f57c00;
-            --success: #388e3c;
-            --bg: #f5f7fa;
-            --card-bg: #fff;
-            --text: #333;
-            --text-secondary: #666;
-            --border: #e0e4e8;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-        }
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            color: white;
-            padding: 2rem 1rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            pointer-events: none;
-        }
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            position: relative;
-        }
-        .header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-            position: relative;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 1rem;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary);
-        }
-        .stat-card.danger::after { background: var(--danger); }
-        .stat-card.warning::after { background: var(--warning); }
-        .stat-card.success::after { background: var(--success); }
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        .stat-card.danger .stat-value { color: var(--danger); }
-        .stat-card.warning .stat-value { color: var(--warning); }
-        .stat-card.success .stat-value { color: var(--success); }
-        .stat-delta {
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-        }
-        .stat-delta.up { color: var(--danger); }
-        .stat-delta.down { color: var(--success); }
-        .chart-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-        }
-        .chart-section h2 {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: var(--text);
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-        }
-        .controls {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-        }
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
-        .search-box input {
-            width: 100%;
-            padding: 0.6rem 1rem 0.6rem 2.5rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .search-box input:focus {
-            border-color: var(--primary);
-        }
-        .search-box::before {
-            content: '🔍';
-            position: absolute;
-            left: 0.8rem;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0.5;
-        }
-        .filter-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .filter-group label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-        .filter-group select {
-            padding: 0.5rem 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: white;
-            font-size: 0.9rem;
-            outline: none;
-            cursor: pointer;
-        }
-        .table-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .table-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .table-header h2 {
-            font-size: 1.1rem;
-        }
-        .table-header .count {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 0.9rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-        th {
-            background: #f8fafc;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            white-space: nowrap;
-        }
-        th:hover {
-            background: #edf2f7;
-        }
-        th.sortable::after {
-            content: ' ⇅';
-            opacity: 0.3;
-            font-size: 0.75rem;
-        }
-        th.sort-asc::after { content: ' ▲'; opacity: 1; }
-        th.sort-desc::after { content: ' ▼'; opacity: 1; }
-        td {
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-        td.title-cell {
-            max-width: 400px;
-        }
-        td.title-cell a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        td.title-cell a:hover {
-            text-decoration: underline;
-        }
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .badge-success { background: #e8f5e9; color: var(--success); }
-        .badge-warning { background: #fff3e0; color: var(--warning); }
-        .badge-danger { background: #ffebee; color: var(--danger); }
-        .rate-bar {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .rate-bar .bar {
-            width: 60px;
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .rate-bar .bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-        .pagination {
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .page-buttons {
-            display: flex;
-            gap: 0.3rem;
-        }
-        .page-btn {
-            padding: 0.4rem 0.7rem;
-            border: 1px solid var(--border);
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        .page-btn:hover:not(:disabled) {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        .page-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .page-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        .footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.4rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .stat-value { font-size: 1.5rem; }
-            .controls { flex-direction: column; align-items: stretch; }
-            th, td { padding: 0.6rem 0.5rem; font-size: 0.8rem; }
-            td.title-cell { max-width: 200px; }
-            .rate-bar .bar { width: 40px; }
-            .chart-container { height: 220px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>buygoodfood · 深圳农产品质量安全监测</title>
+<meta name="description" content="深圳市食用农产品监督抽检数据看板，品类风险排行与商家合格率查询。数据来源：深圳市市场监督管理局。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--primary:#2563eb;--primary-light:#3b82f6;--green:#16a34a;--red:#dc2626;--amber:#f59e0b;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;--shadow-sm:0 1px 2px rgba(0,0,0,0.05);--shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);--shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.05);--shadow-lg:0 10px 15px rgba(0,0,0,0.1),0 4px 6px rgba(0,0,0,0.05);}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#fff;color:var(--gray-900);line-height:1.6;display:flex;flex-direction:column;min-height:100vh}
+a{color:var(--primary);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1100px;margin:0 auto;padding:0 1rem;width:100%}
+
+/* Nav */
+.nav{background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:50}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+.nav-logo{display:flex;align-items:baseline;gap:6px;font-weight:700;color:var(--primary);font-size:1rem;letter-spacing:-0.02em}
+.nav-logo span:last-child{font-size:0.75rem;color:var(--gray-400);font-weight:400}
+.nav-links{display:flex;gap:2px;align-items:center}
+.nav-link{padding:6px 14px;border-radius:9999px;font-size:0.875rem;color:var(--gray-600);transition:all 0.2s;cursor:pointer;border:none;background:none;font-family:inherit}
+.nav-link:hover{background:var(--gray-100);color:var(--gray-900)}
+.nav-link.active{background:#eff6ff;color:var(--primary);font-weight:500}
+.nav-menu-btn{display:none;padding:8px;border-radius:8px;background:none;border:none;cursor:pointer;color:var(--gray-600)}
+
+/* Banner */
+.banner{background:linear-gradient(180deg,#f0fdf4 0%,#fff 100%);border-bottom:1px solid #dcfce7}
+.banner-inner{padding:3rem 1rem 2.5rem;text-align:center}
+.banner h2{font-size:1.75rem;font-weight:700;color:var(--gray-900);letter-spacing:-0.02em}
+.banner p{color:var(--gray-500);margin-top:0.5rem;font-size:0.9rem}
+
+/* Search */
+.search-box{max-width:560px;margin:1.5rem auto 0}
+.search-input-wrap{display:flex;align-items:center;gap:12px;height:52px;border:1px solid var(--gray-200);border-radius:9999px;padding:0 20px;background:#fff;box-shadow:var(--shadow-sm);transition:box-shadow 0.2s}
+.search-input-wrap:focus-within{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.search-input-wrap svg{flex-shrink:0;color:var(--gray-400)}
+.search-input-wrap input{flex:1;border:none;outline:none;background:transparent;font-size:1rem;color:var(--gray-900);font-family:inherit}
+.search-input-wrap input::placeholder{color:var(--gray-400)}
+.search-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:0.875rem;font-weight:500;cursor:pointer;transition:background 0.2s;font-family:inherit}
+.search-btn:hover{background:#15803d}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2rem 0}
+.stat-card{background:linear-gradient(180deg,var(--gray-50) 0%,#fff 100%);border-radius:16px;padding:1.25rem;border:1px solid var(--gray-200);transition:box-shadow 0.2s}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-card.green{border-color:#dcfce7;background:linear-gradient(180deg,#f0fdf4 0%,#fff 100%)}
+.stat-card.red{border-color:#fee2e2;background:linear-gradient(180deg,#fef2f2 0%,#fff 100%)}
+.stat-card.blue{border-color:#dbeafe;background:linear-gradient(180deg,#eff6ff 0%,#fff 100%)}
+.stat-label{font-size:0.75rem;font-weight:500;color:var(--gray-500);margin-bottom:0.25rem}
+.stat-value{font-size:1.75rem;font-weight:700;letter-spacing:-0.02em;color:var(--gray-900);line-height:1.2}
+.stat-card.green .stat-value{color:var(--green)}
+.stat-card.red .stat-value{color:var(--red)}
+.stat-card.blue .stat-value{color:var(--primary)}
+.stat-delta{font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem}
+
+/* Section */
+.section{margin-bottom:2rem}
+.section-title{font-size:1.125rem;font-weight:600;color:var(--gray-900);margin-bottom:0.25rem;letter-spacing:-0.01em}
+.section-subtitle{font-size:0.875rem;color:var(--gray-500);margin-bottom:1rem}
+
+/* Card */
+.card{background:#fff;border-radius:16px;border:1px solid var(--gray-200);box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow 0.2s}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-100)}
+.card-body{padding:1.25rem}
+.card-title{font-size:1rem;font-weight:600;color:var(--gray-900)}
+.card-subtitle{font-size:0.875rem;color:var(--gray-500);margin-top:0.125rem}
+
+/* Quick links */
+.quick-links{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
+.quick-card{display:block;border-radius:12px;padding:1.25rem;border:2px solid;transition:all 0.2s;cursor:pointer}
+.quick-card:hover{transform:translateY(-1px)}
+.quick-card.blue{border-color:#bfdbfe;background:#eff6ff}
+.quick-card.blue:hover{border-color:#93c5fd;background:#dbeafe}
+.quick-card.emerald{border-color:#a7f3d0;background:#ecfdf5}
+.quick-card.emerald:hover{border-color:#6ee7b7;background:#d1fae5}
+.quick-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.75rem}
+.quick-card-tag{font-size:0.7rem;font-weight:600;padding:2px 10px;border-radius:9999px;background:#fff;color:var(--gray-700);box-shadow:var(--shadow-sm)}
+.quick-card-title{font-size:1.25rem;font-weight:700;color:var(--gray-900);margin-bottom:0.5rem}
+.quick-card-desc{font-size:0.875rem;color:var(--gray-600);line-height:1.6}
+.quick-card-btn{display:inline-flex;align-items:center;gap:4px;margin-top:1rem;padding:8px 16px;border-radius:8px;font-size:0.875rem;font-weight:600;color:#fff;border:none;cursor:pointer;font-family:inherit;transition:opacity 0.2s}
+.quick-card-btn:hover{opacity:0.9}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.875rem}
+th,td{padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--gray-100)}
+th{font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;background:var(--gray-50);white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover{background:var(--gray-100)}
+th .sort-icon{margin-left:4px;opacity:0.4;font-size:0.7rem}
+th.sort-asc .sort-icon,th.sort-desc .sort-icon{opacity:1}
+tbody tr:hover{background:var(--gray-50)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:0.75rem;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.rate-bar{display:inline-flex;align-items:center;gap:6px}
+.rate-bar .bar{width:48px;height:5px;background:var(--gray-200);border-radius:3px;overflow:hidden}
+.rate-bar .bar-fill{height:100%;border-radius:3px}
+
+/* Mobile cards */
+.mobile-cards{display:none;gap:0.75rem;flex-direction:column}
+.mobile-card{border:1px solid var(--gray-200);border-radius:12px;padding:1rem;background:#fff}
+.mobile-card-title{font-size:0.875rem;font-weight:500;color:var(--primary);line-height:1.4;margin-bottom:0.75rem}
+.mobile-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;font-size:0.75rem}
+.mobile-card-grid div{text-align:center}
+.mobile-card-grid .label{color:var(--gray-400);margin-bottom:2px}
+.mobile-card-grid .value{color:var(--gray-700);font-weight:500}
+.mobile-card-grid .value.red{color:var(--red)}
+
+/* Pagination */
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-top:1px solid var(--gray-100)}
+.page-btns{display:flex;gap:0.25rem}
+.page-btn{padding:6px 12px;border:1px solid var(--gray-200);background:#fff;border-radius:6px;font-size:0.8rem;cursor:pointer;transition:all 0.2s;color:var(--gray-600)}
+.page-btn:hover:not(:disabled){background:var(--gray-50);border-color:var(--gray-300)}
+.page-btn:disabled{opacity:0.4;cursor:not-allowed}
+.page-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Footer */
+.footer{border-top:1px solid var(--gray-100);background:#fff;margin-top:auto}
+.footer-inner{padding:1.5rem 1rem;text-align:center;font-size:0.8rem;color:var(--gray-400)}
+.footer-inner p:first-child{font-weight:500;color:var(--gray-600);margin-bottom:0.25rem}
+
+/* Page content */
+.page-content{display:none;animation:fadeIn 0.3s ease}
+.page-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Search results */
+.search-results{margin-top:1.5rem}
+.search-empty{text-align:center;padding:3rem;color:var(--gray-500)}
+.search-empty h3{font-size:1.125rem;color:var(--gray-700);margin-bottom:0.5rem}
+
+/* Category / Vendor lists */
+.rank-list{display:flex;flex-direction:column;gap:0.75rem}
+.rank-item{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:#fff;border:1px solid var(--gray-200);border-radius:12px;transition:box-shadow 0.2s}
+.rank-item:hover{box-shadow:var(--shadow-md)}
+.rank-num{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:0.875rem;font-weight:700;color:#fff;background:var(--gray-400);flex-shrink:0}
+.rank-num.top3{background:var(--amber)}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-weight:600;color:var(--gray-900);font-size:0.95rem}
+.rank-meta{font-size:0.8rem;color:var(--gray-500);margin-top:2px}
+.rank-stats{display:flex;gap:1.5rem;text-align:center;flex-shrink:0}
+.rank-stat div:first-child{font-size:0.75rem;color:var(--gray-400)}
+.rank-stat div:last-child{font-size:1rem;font-weight:700;color:var(--gray-700)}
+.rank-stat.red div:last-child{color:var(--red)}
+
+/* Warning bar */
+.warning-bar{background:#fffbeb;border-bottom:1px solid #fde68a;padding:0.5rem 1rem;text-align:center;font-size:0.75rem;color:#92400e;line-height:1.5}
+.warning-bar a{color:#92400e;font-weight:600;text-decoration:underline}
+
+/* Controls */
+.controls{display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
+.filter-select{padding:6px 12px;border:1px solid var(--gray-200);border-radius:8px;background:#fff;font-size:0.875rem;color:var(--gray-700);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--primary)}
+
+/* Responsive */
+@media(max-width:768px){
+  .nav-links{display:none;position:absolute;top:56px;left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200);padding:0.5rem;flex-direction:column;gap:0}
+  .nav-links.open{display:flex}
+  .nav-link{width:100%;text-align:center;padding:10px;border-radius:8px}
+  .nav-menu-btn{display:block}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-value{font-size:1.25rem}
+  .quick-links{grid-template-columns:1fr}
+  .banner-inner{padding:2rem 1rem 1.5rem}
+  .banner h2{font-size:1.4rem}
+  .search-btn{display:none}
+  .table-wrap{display:none}
+  .mobile-cards{display:flex}
+  .pagination{flex-direction:column;gap:0.5rem}
+  .rank-item{flex-direction:column;align-items:flex-start;gap:0.75rem}
+  .rank-stats{width:100%;justify-content:space-around}
+}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🛡️ 深圳市食用农产品质量安全监督抽检数据</h1>
-        <p>数据来源于深圳市市场监督管理局官方通告，实时更新</p>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="nav-logo" href="#" onclick="showPage('dashboard')">🥬 buygoodfood.com<span>吃好一点</span></a>
+    <div class="nav-links" id="navLinks">
+      <button class="nav-link active" data-page="dashboard" onclick="showPage('dashboard')">数据看板</button>
+      <button class="nav-link" data-page="search" onclick="showPage('search')">搜索</button>
+      <button class="nav-link" data-page="products" onclick="showPage('products')">品类排行</button>
+      <button class="nav-link" data-page="vendors" onclick="showPage('vendors')">商家排行</button>
+      <button class="nav-link" data-page="about" onclick="showPage('about')">数据说明</button>
     </div>
+    <button class="nav-menu-btn" onclick="toggleMenu()" aria-label="菜单">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
 
-    <div class="container">
-        <div class="stats-grid" id="statsGrid"></div>
+<!-- Warning -->
+<div class="warning-bar">
+  本站收录<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局</a>自 2024 年至今公开通告的<b>历史累计</b>抽检数据，<b>仅供参考</b>；附件多为扫描件/图片，经自动识别整理，<b>因技术原因部分数据可能存在偏差或不准确</b>，请以官方原文为准。
+</div>
 
-        <div class="chart-section">
-            <h2>📊 合格率趋势</h2>
-            <div class="chart-container">
-                <canvas id="trendChart"></canvas>
-            </div>
-        </div>
+<main class="flex-1">
 
-        <div class="controls">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="搜索通告标题、日期...">
-            </div>
-            <div class="filter-group">
-                <label>年份:</label>
-                <select id="yearFilter">
-                    <option value="">全部</option>
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>合格率:</label>
-                <select id="rateFilter">
-                    <option value="">全部</option>
-                    <option value="high">≥98%</option>
-                    <option value="mid">95%-98%</option>
-                    <option value="low"><95%</option>
-                </select>
-            </div>
-        </div>
+<!-- ========== DASHBOARD PAGE ========== -->
+<div id="page-dashboard" class="page-content active">
 
-        <div class="table-section">
-            <div class="table-header">
-                <h2>📋 抽检通告明细</h2>
-                <span class="count" id="resultCount">共 0 条</span>
-            </div>
-            <div style="overflow-x: auto;">
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-col="title">通告标题</th>
-                            <th class="sortable" data-col="date">日期</th>
-                            <th class="sortable" data-col="total" style="text-align:right">抽检数</th>
-                            <th class="sortable" data-col="fail" style="text-align:right">不合格</th>
-                            <th class="sortable" data-col="rate" style="text-align:right">合格率</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-            <div class="pagination" id="pagination"></div>
-        </div>
+<!-- Banner -->
+<section class="banner">
+  <div class="container banner-inner">
+    <h2>查产品或商家历史抽检记录</h2>
+    <p>输入农产品名称或商家名称，即可查询历史抽检合格情况。</p>
+    <div class="search-box">
+      <form class="search-input-wrap" onsubmit="doSearch(event)">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="homeSearch" placeholder="例如：番茄、黄瓜、某某市场" autocomplete="off">
+        <button type="submit" class="search-btn">搜索</button>
+      </form>
     </div>
+  </div>
+</section>
 
-    <div class="footer">
-        <p>© 深圳市市场监督管理局 · 数据仅供参考，以官方通告为准</p>
+<div class="container">
+
+<!-- Title -->
+<div style="margin:2rem 0 1.5rem">
+  <h1 class="section-title" style="font-size:1.25rem">深圳农产品质量安全监测数据看板</h1>
+  <p class="section-subtitle">数据来源：深圳市市场监督管理局 | 更新于 2026-06-28</p>
+  <p style="font-size:0.8rem;color:var(--gray-400)">希望每一个深圳人都能买到放心的菜。</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">累计样品数</div>
+    <div class="stat-value">50,568</div>
+    <div class="stat-delta">31 期通告</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">合格数</div>
+    <div class="stat-value">49,276</div>
+    <div class="stat-delta">97.45%</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">不合格数</div>
+    <div class="stat-value">1,292</div>
+    <div class="stat-delta">2.55%</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-label">平均合格率</div>
+    <div class="stat-value">97.05%</div>
+    <div class="stat-delta">各期平均值</div>
+  </div>
+</div>
+<p style="font-size:0.75rem;color:var(--gray-400);margin:-1rem 0 1.5rem">以上为 2024 年至今历史累计数据，仅供参考；因附件多为扫描件、经自动识别整理，部分数据可能存在偏差，请以官方原文为准。</p>
+
+<!-- Latest Report -->
+<div class="card" style="margin-bottom:2rem">
+  <div class="card-header">
+    <div class="card-title">最新通告</div>
+    <div class="card-subtitle">2026-06-25</div>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+      <div><span style="font-size:0.875rem;color:var(--gray-500)">总样品数</span><p style="font-size:1.75rem;font-weight:700;color:var(--gray-900)">2,615</p></div>
+      <div><span style="font-size:0.875rem;color:var(--gray-500)">不合格数</span><p style="font-size:1.75rem;font-weight:700;color:var(--red)">71</p></div>
+      <div><span style="font-size:0.875rem;color:var(--gray-500)">合格率</span><p style="font-size:1.75rem;font-weight:700;color:var(--green)">97.28%</p></div>
     </div>
+    <p style="margin-top:0.75rem;font-size:0.875rem"><a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12856649.html" target="_blank">深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第5期） →</a></p>
+  </div>
+</div>
 
-    <script>
-    const rawData = [
-        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2026-06-25",total:2615,fail:71,rate:97.28},
-        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2026-06-08",total:2305,fail:86,rate:96.27},
-        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2026-05-09",total:2844,fail:72,rate:97.47},
-        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2026-04-02",total:2566,fail:101,rate:96.06},
-        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2026-02-24",total:803,fail:32,rate:96.01},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2025-12-24",total:1032,fail:40,rate:96.12},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2025-11-18",total:1876,fail:36,rate:98.08},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2025-10-27",total:3064,fail:52,rate:98.30},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2025-09-19",total:4010,fail:58,rate:98.55},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2025-09-02",total:7060,fail:90,rate:98.73},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2025-08-01",total:3260,fail:33,rate:98.99},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2025-07-09",total:685,fail:16,rate:97.66},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2025-05-26",total:191,fail:7,rate:96.34},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2025-05-06",total:1967,fail:49,rate:97.51},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2025-03-06",total:329,fail:13,rate:96.05},
-        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2025-01-21",total:985,fail:30,rate:96.95},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第14期）",date:"2025-01-13",total:758,fail:19,rate:97.49},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第13期）",date:"2024-12-19",total:945,fail:37,rate:96.08},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第12期）",date:"2024-12-10",total:1063,fail:42,rate:96.05},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2024-11-25",total:556,fail:15,rate:97.30},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2024-11-15",total:1090,fail:43,rate:96.06},
-        {title:"深圳市市场监督管理局关于2024年传统节日食用农产品\"你点我检、服务惠民生\"监督抽检结果的通告",date:"2024-10-29",total:57,fail:0,rate:100.00},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2024-10-17",total:469,fail:13,rate:97.23},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2024-10-12",total:440,fail:14,rate:96.82},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2024-09-18",total:663,fail:20,rate:96.98},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2024-09-02",total:938,fail:24,rate:97.44},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2024-08-26",total:871,fail:35,rate:95.98},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2024-08-09",total:799,fail:34,rate:95.74},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2024-07-30",total:1726,fail:72,rate:95.83},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2024-07-17",total:1426,fail:60,rate:95.79},
-        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2024-06-07",total:3175,fail:78,rate:97.54},
-    ];
+<!-- Trend Chart -->
+<div class="card" style="margin-bottom:2rem">
+  <div class="card-header">
+    <div class="card-title">合格率趋势</div>
+    <div class="card-subtitle">各期抽检合格率变化</div>
+  </div>
+  <div class="card-body">
+    <div style="position:relative;height:280px">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+</div>
 
-    let filteredData = [...rawData];
-    let sortCol = 'date';
-    let sortDesc = true;
-    let currentPage = 1;
-    const pageSize = 10;
+<!-- Quick Links -->
+<div class="section">
+  <h2 class="section-title">开始查询</h2>
+  <p class="section-subtitle">按品类看风险，或按商家和街道查询历史抽检记录。</p>
+  <div class="quick-links">
+    <div class="quick-card blue" onclick="showPage('products')">
+      <div class="quick-card-header">
+        <div>
+          <p style="font-size:0.75rem;font-weight:600;color:var(--primary)">按食品品类查看</p>
+          <div class="quick-card-title">品类排行榜</div>
+        </div>
+        <span class="quick-card-tag">447 种</span>
+      </div>
+      <p class="quick-card-desc">查看哪些农产品品类不合格记录更多，支持按不合格数和合格率排序。</p>
+      <button class="quick-card-btn" style="background:var(--primary)">进入品类排行 →</button>
+    </div>
+    <div class="quick-card emerald" onclick="showPage('vendors')">
+      <div class="quick-card-header">
+        <div>
+          <p style="font-size:0.75rem;font-weight:600;color:#059669">按地点和商家查看</p>
+          <div class="quick-card-title">商家排行榜</div>
+        </div>
+        <span class="quick-card-tag" style="color:#059669">5,230 家</span>
+      </div>
+      <p class="quick-card-desc">按区、街道筛选受检单位，筛选后的链接可以直接复制分享。</p>
+      <button class="quick-card-btn" style="background:#059669">进入商家排行 →</button>
+    </div>
+  </div>
+</div>
 
-    function renderStats() {
-        const total = rawData.reduce((s,d)=>s+d.total,0);
-        const fail = rawData.reduce((s,d)=>s+d.fail,0);
-        const avgRate = (rawData.reduce((s,d)=>s+d.rate,0)/rawData.length).toFixed(2);
-        const latest = rawData[0];
+<!-- History Reports -->
+<div class="section">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">历史通告记录</div>
+      <div class="card-subtitle">共 31 期监督抽检通告</div>
+    </div>
+    <div class="card-body" style="padding:0">
+      <!-- Desktop Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>通告标题</th>
+              <th style="text-align:right;width:90px">日期</th>
+              <th style="text-align:right;width:80px">抽检数</th>
+              <th style="text-align:right;width:80px">不合格</th>
+              <th style="text-align:right;width:90px">合格率</th>
+            </tr>
+          </thead>
+          <tbody id="reportsTableBody"></tbody>
+        </table>
+      </div>
+      <!-- Mobile Cards -->
+      <div class="mobile-cards" id="reportsMobileCards"></div>
+      <!-- Pagination -->
+      <div class="pagination" id="reportsPagination"></div>
+    </div>
+  </div>
+</div>
 
-        const grid = document.getElementById('statsGrid');
-        grid.innerHTML = `
-            <div class="stat-card success">
-                <div class="stat-label">累计抽检批次</div>
-                <div class="stat-value">${total.toLocaleString()}</div>
-                <div class="stat-delta">覆盖 ${rawData.length} 期通告</div>
-            </div>
-            <div class="stat-card warning">
-                <div class="stat-label">不合格批次</div>
-                <div class="stat-value">${fail.toLocaleString()}</div>
-                <div class="stat-delta">不合格率 ${(fail/total*100).toFixed(2)}%</div>
-            </div>
-            <div class="stat-card success">
-                <div class="stat-label">平均合格率</div>
-                <div class="stat-value">${avgRate}%</div>
-                <div class="stat-delta">历史平均水平</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">最新一期 (${latest.date})</div>
-                <div class="stat-value">${latest.rate}%</div>
-                <div class="stat-delta">抽检 ${latest.total} 批次</div>
-            </div>
-        `;
+</div><!-- /container -->
+</div><!-- /dashboard -->
+
+
+<!-- ========== SEARCH PAGE ========== -->
+<div id="page-search" class="page-content">
+<div class="container" style="padding-top:2rem">
+  <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🔍 搜索抽检记录</h1>
+  <p class="section-subtitle">输入农产品名称（如：番茄、黄瓜）或商家名称（如：某某市场、某某超市），查询历史抽检情况。</p>
+  <div class="search-box" style="max-width:640px;margin:1.5rem 0">
+    <form class="search-input-wrap" onsubmit="doSearch(event)" style="height:56px">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="pageSearchInput" placeholder="例如：番茄、黄瓜、某某市场" autocomplete="off" style="font-size:1.05rem">
+      <button type="submit" class="search-btn" style="padding:10px 28px">搜索</button>
+    </form>
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</div>
+</div>
+
+
+<!-- ========== PRODUCTS PAGE ========== -->
+<div id="page-products" class="page-content">
+<div class="container" style="padding-top:2rem">
+  <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🥬 品类排行榜</h1>
+  <p class="section-subtitle">按农产品品类统计历史抽检不合格记录，数据量越大参考价值越高。</p>
+  <div class="controls">
+    <select class="filter-select" id="productSort" onchange="renderProducts()">
+      <option value="fail-desc">按不合格数排序</option>
+      <option value="rate-asc">按合格率排序（低到高）</option>
+      <option value="total-desc">按抽检总数排序</option>
+    </select>
+    <select class="filter-select" id="productFilter" onchange="renderProducts()">
+      <option value="">全部品类</option>
+      <option value="蔬菜">蔬菜类</option>
+      <option value="水果">水果类</option>
+      <option value="肉类">肉类</option>
+      <option value="水产">水产品</option>
+    </select>
+  </div>
+  <div class="rank-list" id="productList"></div>
+</div>
+</div>
+
+
+<!-- ========== VENDORS PAGE ========== -->
+<div id="page-vendors" class="page-content">
+<div class="container" style="padding-top:2rem">
+  <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🏪 商家排行榜</h1>
+  <p class="section-subtitle">按受检单位统计历史抽检情况，支持按区和街道筛选。</p>
+  <div class="controls">
+    <select class="filter-select" id="vendorDistrict" onchange="renderVendors()">
+      <option value="">全部区域</option>
+      <option value="福田区">福田区</option>
+      <option value="罗湖区">罗湖区</option>
+      <option value="南山区">南山区</option>
+      <option value="宝安区">宝安区</option>
+      <option value="龙岗区">龙岗区</option>
+      <option value="盐田区">盐田区</option>
+      <option value="龙华区">龙华区</option>
+      <option value="坪山区">坪山区</option>
+      <option value="光明区">光明区</option>
+    </select>
+    <select class="filter-select" id="vendorSort" onchange="renderVendors()">
+      <option value="fail-desc">按不合格数排序</option>
+      <option value="rate-asc">按合格率排序（低到高）</option>
+    </select>
+  </div>
+  <div class="rank-list" id="vendorList"></div>
+</div>
+</div>
+
+
+<!-- ========== ABOUT PAGE ========== -->
+<div id="page-about" class="page-content">
+<div class="container" style="padding-top:2rem;max-width:720px">
+  <h1 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">📋 数据说明</h1>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-body">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据来源</h3>
+      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">本站数据来源于<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局</a>公开发布的食用农产品质量安全监督抽检结果通告。所有数据均为官方公开信息，本站仅做汇总整理。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据范围</h3>
+      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">收录 2024 年至今深圳市市场监督管理局发布的全部食用农产品质量安全监督抽检结果通告，涵盖种植业产品、畜禽产品、水产品三大类。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据准确性声明</h3>
+      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">原始通告附件多为扫描件/图片格式，本站数据经 OCR 自动识别整理，<b>因技术原因部分数据可能存在偏差或不准确</b>。如需精确数据，请以官方通告原文为准。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">更新频率</h3>
+      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8">数据定期自动更新，通常在官方发布新通告后 1-3 个工作日内同步。</p>
+    </div>
+  </div>
+</div>
+</div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <p>buygoodfood.com · 希望我们能一起搭建一个健康的买菜环境 🥬</p>
+    <p>数据来源：<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局公开通告</a> · 收录 2024 年至今历史累计数据，仅供参考 · 经自动识别整理，部分数据可能有误，请以官方原文为准</p>
+  </div>
+</footer>
+
+<script>
+// ===================== DATA =====================
+const reports = [
+  {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2026-06-25",total:2615,fail:71,rate:97.28,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12856649.html"},
+  {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2026-06-08",total:2305,fail:86,rate:96.27,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12828044.html"},
+  {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2026-05-09",total:2844,fail:72,rate:97.47,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12772210.html"},
+  {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2026-04-02",total:2566,fail:101,rate:96.06,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12717060.html"},
+  {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2026-02-24",total:803,fail:32,rate:96.01,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12651177.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2025-12-24",total:1032,fail:40,rate:96.12,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12566174.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2025-11-18",total:1876,fail:36,rate:98.08,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12503129.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2025-10-27",total:3064,fail:52,rate:98.30,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12457873.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2025-09-19",total:4010,fail:58,rate:98.55,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12403799.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2025-09-02",total:7060,fail:90,rate:98.73,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12358167.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2025-08-01",total:3260,fail:33,rate:98.99,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12307645.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2025-07-09",total:685,fail:16,rate:97.66,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12269340.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2025-05-26",total:191,fail:7,rate:96.34,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12195589.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2025-05-06",total:1967,fail:49,rate:97.51,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12159797.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2025-03-06",total:329,fail:13,rate:96.05,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_12054055.html"},
+  {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2025-01-21",total:985,fail:30,rate:96.95,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11969759.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第14期）",date:"2025-01-13",total:758,fail:19,rate:97.49,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11955031.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第13期）",date:"2024-12-19",total:945,fail:37,rate:96.08,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11907731.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第12期）",date:"2024-12-10",total:1063,fail:42,rate:96.05,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11849989.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2024-11-25",total:556,fail:15,rate:97.30,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11812330.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2024-11-15",total:1090,fail:43,rate:96.06,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11726481.html"},
+  {title:"深圳市市场监督管理局关于2024年传统节日食用农产品\"你点我检、服务惠民生\"监督抽检结果的通告",date:"2024-10-29",total:57,fail:0,rate:100.00,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11670764.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2024-10-17",total:469,fail:13,rate:97.23,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11639541.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2024-10-12",total:440,fail:14,rate:96.82,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11625290.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2024-09-18",total:663,fail:20,rate:96.98,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11560133.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2024-09-02",total:938,fail:24,rate:97.44,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11533878.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2024-08-26",total:871,fail:35,rate:95.98,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11523003.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2024-08-09",total:799,fail:34,rate:95.74,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11492624.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2024-07-30",total:1726,fail:72,rate:95.83,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11473247.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2024-07-17",total:1426,fail:60,rate:95.79,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11439054.html"},
+  {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2024-06-07",total:3175,fail:78,rate:97.54,url:"https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/content/post_11346533.html"},
+];
+
+const demoProducts = [
+  {name:"豇豆（长豆角）",category:"蔬菜",total:342,fail:28,rate:91.81},
+  {name:"姜",category:"蔬菜",total:156,fail:19,rate:87.82},
+  {name:"泥鳅",category:"水产",total:89,fail:15,rate:83.15},
+  {name:"韭菜",category:"蔬菜",total:267,fail:22,rate:91.76},
+  {name:"黄鳝",category:"水产",total:76,fail:12,rate:84.21},
+  {name:"芹菜",category:"蔬菜",total:198,fail:14,rate:92.93},
+  {name:"鳊鱼",category:"水产",total:45,fail:8,rate:82.22},
+  {name:"鸡肉",category:"肉类",total:523,fail:11,rate:97.90},
+  {name:"猪肉",category:"肉类",total:891,fail:16,rate:98.20},
+  {name:"苹果",category:"水果",total:312,fail:5,rate:98.40},
+  {name:"番茄",category:"蔬菜",total:456,fail:6,rate:98.68},
+  {name:"黄瓜",category:"蔬菜",total:389,fail:7,rate:98.20},
+  {name:"香蕉",category:"水果",total:278,fail:4,rate:98.56},
+  {name:"草鱼",category:"水产",total:234,fail:9,rate:96.15},
+  {name:"鸡蛋",category:"肉类",total:567,fail:8,rate:98.59},
+  {name:"大白菜",category:"蔬菜",total:445,fail:3,rate:99.33},
+  {name:"橙子",category:"水果",total:198,fail:2,rate:98.99},
+  {name:"牛肉",category:"肉类",total:312,fail:5,rate:98.40},
+  {name:"鲈鱼",category:"水产",total:156,fail:4,rate:97.44},
+  {name:"菠菜",category:"蔬菜",total:234,fail:6,rate:97.44},
+];
+
+const demoVendors = [
+  {name:"福田农产品批发市场",district:"福田区",total:1234,fail:34,rate:97.25},
+  {name:"南山农贸批发市场",district:"南山区",total:987,fail:28,rate:97.16},
+  {name:"布吉农批市场",district:"龙岗区",total:1567,fail:45,rate:97.13},
+  {name:"宝安农贸批发市场",district:"宝安区",total:1123,fail:38,rate:96.62},
+  {name:"罗湖商业城农贸市场",district:"罗湖区",total:678,fail:23,rate:96.61},
+  {name:"龙华新区综合市场",district:"龙华区",total:845,fail:31,rate:96.33},
+  {name:"龙岗中心城农贸市场",district:"龙岗区",total:756,fail:29,rate:96.16},
+  {name:"西乡农贸批发市场",district:"宝安区",total:623,fail:25,rate:95.99},
+  {name:"盐田综合市场",district:"盐田区",total:345,fail:15,rate:95.65},
+  {name:"光明新区农贸市场",district:"光明区",total:456,fail:21,rate:95.39},
+  {name:"坪山综合市场",district:"坪山区",total:234,fail:12,rate:94.87},
+  {name:"蛇口市场",district:"南山区",total:567,fail:18,rate:96.83},
+  {name:"华强北农贸市场",district:"福田区",total:432,fail:14,rate:96.76},
+  {name:"沙井综合市场",district:"宝安区",total:678,fail:22,rate:96.76},
+  {name:"观澜农贸市场",district:"龙华区",total:345,fail:12,rate:96.52},
+];
+
+// ===================== ROUTING =====================
+function showPage(page){
+  document.querySelectorAll('.page-content').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-link[data-page="'+page+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  document.getElementById('navLinks').classList.remove('open');
+  window.scrollTo(0,0);
+  if(page==='products') renderProducts();
+  if(page==='vendors') renderVendors();
+}
+function toggleMenu(){document.getElementById('navLinks').classList.toggle('open')}
+
+// ===================== CHART =====================
+function initChart(){
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const labels = [...reports].reverse().map(d=>d.date);
+  const rates = [...reports].reverse().map(d=>d.rate);
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'合格率(%)',
+        data:rates,
+        borderColor:'#16a34a',
+        backgroundColor:'rgba(22,163,74,0.08)',
+        fill:true,
+        tension:0.35,
+        pointRadius:3,
+        pointHoverRadius:6,
+        pointBackgroundColor:'#16a34a',
+        borderWidth:2,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'合格率: '+c.parsed.y+'%'}}},
+      scales:{
+        y:{min:90,max:100.5,grid:{color:'#f3f4f6'},ticks:{callback:v=>v+'%'}},
+        x:{grid:{display:false},ticks:{font:{size:11},maxRotation:45}}
+      },
+      interaction:{mode:'index',intersect:false}
     }
+  });
+}
 
-    function renderChart() {
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        const labels = rawData.map(d=>d.date).reverse();
-        const rates = rawData.map(d=>d.rate).reverse();
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: '合格率 (%)',
-                    data: rates,
-                    borderColor: '#1a5f3f',
-                    backgroundColor: 'rgba(26,95,63,0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => `合格率: ${ctx.parsed.y}%`
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        min: 90,
-                        max: 100,
-                        grid: { color: '#f0f0f0' }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
+// ===================== REPORTS TABLE =====================
+let reportPage = 1;
+const reportPageSize = 10;
+
+function getBadgeClass(rate){
+  if(rate>=98) return 'badge-green';
+  if(rate>=96) return 'badge-yellow';
+  return 'badge-red';
+}
+function getBarColor(rate){
+  if(rate>=98) return '#16a34a';
+  if(rate>=96) return '#f59e0b';
+  return '#dc2626';
+}
+
+function renderReports(){
+  const start = (reportPage-1)*reportPageSize;
+  const pageData = reports.slice(start,start+reportPageSize);
+  const totalPages = Math.ceil(reports.length/reportPageSize);
+
+  // Desktop
+  document.getElementById('reportsTableBody').innerHTML = pageData.map(r=>`
+    <tr>
+      <td><a href="${r.url}" target="_blank" style="font-weight:500;line-height:1.4;display:block;max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.title}</a></td>
+      <td class="num" style="color:var(--gray-500);white-space:nowrap">${r.date}</td>
+      <td class="num">${r.total.toLocaleString()}</td>
+      <td class="num" style="color:var(--red);font-weight:600">${r.fail}</td>
+      <td class="num">
+        <div class="rate-bar">
+          <span class="badge ${getBadgeClass(r.rate)}">${r.rate}%</span>
+          <div class="bar"><div class="bar-fill" style="width:${r.rate}%;background:${getBarColor(r.rate)}"></div></div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // Mobile
+  document.getElementById('reportsMobileCards').innerHTML = pageData.map(r=>`
+    <div class="mobile-card">
+      <div class="mobile-card-title"><a href="${r.url}" target="_blank">${r.title}</a></div>
+      <div class="mobile-card-grid">
+        <div><div class="label">日期</div><div class="value">${r.date}</div></div>
+        <div><div class="label">抽检</div><div class="value">${r.total.toLocaleString()}</div></div>
+        <div><div class="label">不合格</div><div class="value red">${r.fail}</div></div>
+        <div><div class="label">合格率</div><div class="value"><span class="badge ${getBadgeClass(r.rate)}">${r.rate}%</span></div></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Pagination
+  let html = `<div class="page-bts">`;
+  html += `<button class="page-btn" onclick="goReportPage(${reportPage-1})" ${reportPage===1?'disabled':''}>上一页</button>`;
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||(i>=reportPage-2&&i<=reportPage+2)){
+      html += `<button class="page-btn ${i===reportPage?'active':''}" onclick="goReportPage(${i})">${i}</button>`;
+    } else if(i===reportPage-3||i===reportPage+3){
+      html += `<span style="padding:6px 4px;color:var(--gray-400)">...</span>`;
     }
+  }
+  html += `<button class="page-btn" onclick="goReportPage(${reportPage+1})" ${reportPage===totalPages?'disabled':''}>下一页</button>`;
+  html += `</div><span style="font-size:0.8rem;color:var(--gray-500)">第 ${reportPage}/${totalPages} 页</span>`;
+  document.getElementById('reportsPagination').innerHTML = html;
+}
+window.goReportPage = function(p){
+  const total = Math.ceil(reports.length/reportPageSize);
+  if(p<1||p>total) return;
+  reportPage = p;
+  renderReports();
+  document.querySelector('.table-section, .card').scrollIntoView({behavior:'smooth',block:'start'});
+};
 
-    function getBarColor(rate) {
-        if (rate >= 98) return '#388e3c';
-        if (rate >= 96) return '#f57c00';
-        return '#d32f2f';
+// ===================== PRODUCTS =====================
+function renderProducts(){
+  const sort = document.getElementById('productSort').value;
+  const filter = document.getElementById('productFilter').value;
+  let data = [...demoProducts];
+  if(filter) data = data.filter(p=>p.category===filter);
+  if(sort==='fail-desc') data.sort((a,b)=>b.fail-a.fail);
+  else if(sort==='rate-asc') data.sort((a,b)=>a.rate-b.rate);
+  else if(sort==='total-desc') data.sort((a,b)=>b.total-a.total);
+
+  document.getElementById('productList').innerHTML = data.map((p,i)=>`
+    <div class="rank-item">
+      <div class="rank-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${p.name}</div>
+        <div class="rank-meta">${p.category} · 累计抽检 ${p.total} 批次</div>
+      </div>
+      <div class="rank-stats">
+        <div class="rank-stat"><div>不合格数</div><div class="red">${p.fail}</div></div>
+        <div class="rank-stat"><div>合格率</div><div style="color:${getBarColor(p.rate)}">${p.rate}%</div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== VENDORS =====================
+function renderVendors(){
+  const district = document.getElementById('vendorDistrict').value;
+  const sort = document.getElementById('vendorSort').value;
+  let data = [...demoVendors];
+  if(district) data = data.filter(v=>v.district===district);
+  if(sort==='fail-desc') data.sort((a,b)=>b.fail-a.fail);
+  else if(sort==='rate-asc') data.sort((a,b)=>a.rate-b.rate);
+
+  document.getElementById('vendorList').innerHTML = data.map((v,i)=>`
+    <div class="rank-item">
+      <div class="rank-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${v.name}</div>
+        <div class="rank-meta">${v.district} · 累计抽检 ${v.total} 批次</div>
+      </div>
+      <div class="rank-stats">
+        <div class="rank-stat"><div>不合格数</div><div class="red">${v.fail}</div></div>
+        <div class="rank-stat"><div>合格率</div><div style="color:${getBarColor(v.rate)}">${v.rate}%</div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== SEARCH =====================
+function doSearch(e){
+  e.preventDefault();
+  const input = e.target.querySelector('input');
+  const q = (input||{}).value?.trim();
+  if(!q) return;
+  showPage('search');
+  document.getElementById('pageSearchInput').value = q;
+  performSearch(q);
+}
+
+function performSearch(q){
+  const term = q.toLowerCase();
+  const matchedProducts = demoProducts.filter(p=>p.name.toLowerCase().includes(term));
+  const matchedVendors = demoVendors.filter(v=>v.name.toLowerCase().includes(term));
+
+  let html = '';
+  if(matchedProducts.length===0 && matchedVendors.length===0){
+    html = `<div class="search-empty">
+      <h3>未找到「${q}」的相关记录</h3>
+      <p>请尝试其他关键词，如：蔬菜名称、水果名称、市场名称等</p>
+    </div>`;
+  } else {
+    if(matchedProducts.length>0){
+      html += `<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 0.75rem">🥬 相关品类（${matchedProducts.length} 条）</h3>`;
+      html += `<div class="rank-list">`;
+      html += matchedProducts.map(p=>`
+        <div class="rank-item">
+          <div class="rank-info"><div class="rank-name">${p.name}</div><div class="rank-meta">${p.category} · 累计抽检 ${p.total} 批次</div></div>
+          <div class="rank-stats">
+            <div class="rank-stat"><div>不合格</div><div class="red">${p.fail}</div></div>
+            <div class="rank-stat"><div>合格率</div><div style="color:${getBarColor(p.rate)}">${p.rate}%</div></div>
+          </div>
+        </div>
+      `).join('');
+      html += `</div>`;
     }
-
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        const start = (currentPage-1)*pageSize;
-        const pageData = filteredData.slice(start, start+pageSize);
-
-        tbody.innerHTML = pageData.map((d,i) => {
-            const idx = start+i+1;
-            const barColor = getBarColor(d.rate);
-            let badgeClass = 'badge-success';
-            if (d.rate < 96) badgeClass = 'badge-danger';
-            else if (d.rate < 98) badgeClass = 'badge-warning';
-
-            return `<tr>
-                <td class="title-cell">${idx}. ${d.title}</td>
-                <td>${d.date}</td>
-                <td style="text-align:right">${d.total.toLocaleString()}</td>
-                <td style="text-align:right">${d.fail.toLocaleString()}</td>
-                <td style="text-align:right">
-                    <div class="rate-bar">
-                        <span class="badge ${badgeClass}">${d.rate}%</span>
-                        <div class="bar"><div class="bar-fill" style="width:${d.rate}%;background:${barColor}"></div></div>
-                    </div>
-                </td>
-            </tr>`;
-        }).join('');
-
-        document.getElementById('resultCount').textContent = `共 ${filteredData.length} 条`;
-        renderPagination();
+    if(matchedVendors.length>0){
+      html += `<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 0.75rem">🏪 相关商家（${matchedVendors.length} 条）</h3>`;
+      html += `<div class="rank-list">`;
+      html += matchedVendors.map(v=>`
+        <div class="rank-item">
+          <div class="rank-info"><div class="rank-name">${v.name}</div><div class="rank-meta">${v.district} · 累计抽检 ${v.total} 批次</div></div>
+          <div class="rank-stats">
+            <div class="rank-stat"><div>不合格</div><div class="red">${v.fail}</div></div>
+            <div class="rank-stat"><div>合格率</div><div style="color:${getBarColor(v.rate)}">${v.rate}%</div></div>
+          </div>
+        </div>
+      `).join('');
+      html += `</div>`;
     }
+  }
+  document.getElementById('searchResults').innerHTML = html;
+}
 
-    function renderPagination() {
-        const totalPages = Math.ceil(filteredData.length/pageSize);
-        const container = document.getElementById('pagination');
-        if (totalPages <= 1) { container.innerHTML=''; return; }
+// Bind search input
+let searchTimer;
+document.getElementById('pageSearchInput')?.addEventListener('input',function(){
+  clearTimeout(searchTimer);
+  const v = this.value.trim();
+  if(!v){document.getElementById('searchResults').innerHTML='';return;}
+  searchTimer = setTimeout(()=>performSearch(v),300);
+});
 
-        let html = `<div class="page-buttons">`;
-        html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>上一页</button>`;
-        for (let i=1;i<=totalPages;i++) {
-            if (i===1||i===totalPages||(i>=currentPage-2&&i<=currentPage+2)) {
-                html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-            } else if (i===currentPage-3||i===currentPage+3) {
-                html += `<span style="padding:0.4rem">...</span>`;
-            }
-        }
-        html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>下一页</button>`;
-        html += `</div><span style="font-size:0.85rem;color:#666">第 ${currentPage}/${totalPages} 页</span>`;
-        container.innerHTML = html;
-    }
-
-    window.goPage = function(p) {
-        const total = Math.ceil(filteredData.length/pageSize);
-        if (p<1||p>total) return;
-        currentPage = p;
-        renderTable();
-        window.scrollTo({top: document.querySelector('.table-section').offsetTop-20, behavior:'smooth'});
-    };
-
-    function applySort() {
-        filteredData.sort((a,b)=>{
-            let av = a[sortCol], bv = b[sortCol];
-            if (sortCol==='title') { av=a.title; bv=b.title; }
-            if (typeof av==='string') {
-                return sortDesc ? bv.localeCompare(av) : av.localeCompare(bv);
-            }
-            return sortDesc ? bv-av : av-bv;
-        });
-    }
-
-    function applyFilters() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        const year = document.getElementById('yearFilter').value;
-        const rate = document.getElementById('rateFilter').value;
-
-        filteredData = rawData.filter(d => {
-            if (q && !d.title.toLowerCase().includes(q) && !d.date.includes(q)) return false;
-            if (year && !d.date.startsWith(year)) return false;
-            if (rate==='high' && d.rate<98) return false;
-            if (rate==='mid' && (d.rate<95||d.rate>=98)) return false;
-            if (rate==='low' && d.rate>=95) return false;
-            return true;
-        });
-
-        applySort();
-        currentPage = 1;
-        renderTable();
-    }
-
-    document.querySelectorAll('th.sortable').forEach(th=>{
-        th.addEventListener('click',()=>{
-            const col = th.dataset.col;
-            if (sortCol===col) sortDesc=!sortDesc;
-            else { sortCol=col; sortDesc=true; }
-            document.querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
-            th.classList.add(sortDesc?'sort-desc':'sort-asc');
-            applySort();
-            renderTable();
-        });
-    });
-
-    document.getElementById('searchInput').addEventListener('input', applyFilters);
-    document.getElementById('yearFilter').addEventListener('change', applyFilters);
-    document.getElementById('rateFilter').addEventListener('change', applyFilters);
-
-    // init
-    renderStats();
-    renderChart();
-    applySort();
-    renderTable();
-    </script>
+// ===================== INIT =====================
+window.addEventListener('DOMContentLoaded',()=>{
+  renderReports();
+  initChart();
+});
+</script>
 </body>
 </html>
