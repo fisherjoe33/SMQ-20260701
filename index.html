@@ -201,6 +201,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .cyber-grid{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;background-image:linear-gradient(rgba(0,240,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.03) 1px,transparent 1px);background-size:50px 50px}
 </style>
 <div class="cyber-grid"></div>
+<div style="position:fixed;bottom:20px;right:20px;width:120px;height:120px;pointer-events:none;z-index:100;opacity:0.6"><img src="images/tech-ring.gif" style="width:100%;height:100%;object-fit:contain"></div>
 <div class="scanline"></div>
 
 <!-- Nav -->
@@ -222,7 +223,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <!-- Warning -->
 <div class="warning-bar">
-  本站收录<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局</a>自 2024 年至今公开通告的<b>历史累计</b>抽检数据，<b>仅供参考</b>；附件多为扫描件/图片，经自动识别整理，<b>因技术原因部分数据可能存在偏差或不准确</b>，请以官方原文为准。
+  免责声明：本平台所载数据系基于<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局</a>公开发布的食品安全抽检通告（2024年至今）整理汇总，仅供信息参考。因原始通告附件多为扫描件或图片格式，经自动化识别处理，可能存在技术性误差，具体数据请以深圳市市场监督管理局官方原文为准。
 </div>
 
 <main class="flex-1">
@@ -249,9 +250,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <!-- Title -->
 <div style="margin:2rem 0 1.5rem">
-  <h1 class="section-title" style="font-size:1.25rem">深圳农产品质量安全监测 · 赛博数据看板</h1>
-  <p class="section-subtitle">数据来源：深圳市市场监督管理局 | 更新于 2026-06-28 | 赛博朋克数据可视化 v1.0</p>
-  <p style="font-size:0.8rem;color:var(--gray-400)">Data_Visualization_System // SMQ_v1.0 // Cyberpunk_Edition</p>
+  <h1 class="section-title" style="font-size:1.25rem">深圳农产品质量安全监测</h1>
+  <p class="section-subtitle">数据来源：深圳市市场监督管理局 | 更新于 2026-06-28</p>
+  <p style="font-size:0.8rem;color:var(--text-muted)">Data_Visualization_System // SMQ_v1.0</p>
 </div>
 
 <!-- Stats -->
@@ -310,8 +311,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <!-- Quick Links -->
 <div class="section">
-  <h2 class="section-title">开始查询</h2>
-  <p class="section-subtitle">按品类看风险，或按商家和街道查询历史抽检记录。</p>
+  <!-- 开始查询标题已删除 -->
   <div class="quick-links">
     <div class="quick-card blue" onclick="showPage('products')">
       <div class="quick-card-header">
@@ -377,7 +377,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <div id="page-search" class="page-content">
 <div class="container" style="padding-top:2rem">
   <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🔍 查找抽检记录</h1>
-  <p class="section-subtitle">输入农产品名称（如：番茄、黄瓜）或商家名称（如：某某市场、某某超市），查询历史抽检情况。</p>
+  <p class="section-subtitle" style="display:none">输入农产品名称（如：番茄、黄瓜）或商家名称（如：某某市场、某某超市），查询历史抽检情况。</p>
   <div class="search-box" style="max-width:640px;margin:1.5rem 0">
     <form class="search-input-wrap" onsubmit="doSearch(event)" style="height:56px">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -394,14 +394,14 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <div id="page-products" class="page-content">
 <div class="container" style="padding-top:2rem">
   <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🥬 品种统计排行</h1>
-  <p class="section-subtitle">按农产品品类统计历史抽检不合格记录，数据量越大参考价值越高。</p>
+  <p class="section-subtitle">按商品不合格记录数由大到小进行排列<span style="display:inline-block;background:rgba(255,255,255,0.95);color:#0a0a0f;padding:2px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;margin-left:8px">降序排列</span></p>
   <div class="controls">
-    <select class="filter-select" id="productSort" onchange="renderProducts()">
+    <select class="filter-select" id="productSort" onchange="productPage=1;renderProducts()">
       <option value="fail-desc">按不合格数排序</option>
       <option value="rate-asc">按合格率排序（低到高）</option>
       <option value="total-desc">按抽检总数排序</option>
     </select>
-    <select class="filter-select" id="productFilter" onchange="renderProducts()">
+    <select class="filter-select" id="productFilter" onchange="productPage=1;renderProducts()">
       <option value="">全部品类</option>
       <option value="蔬菜">蔬菜类</option>
       <option value="水果">水果类</option>
@@ -418,9 +418,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <div id="page-vendors" class="page-content">
 <div class="container" style="padding-top:2rem">
   <h1 class="section-title" style="font-size:1.5rem;margin-bottom:0.5rem">🏪 商户统计排行</h1>
-  <p class="section-subtitle">按受检单位统计历史抽检情况，支持按区和街道筛选。</p>
+  <p class="section-subtitle">按商户被抽检不合格记录数由大到小进行排列<span style="display:inline-block;background:rgba(255,255,255,0.95);color:#0a0a0f;padding:2px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;margin-left:8px">降序排列</span></p>
   <div class="controls">
-    <select class="filter-select" id="vendorDistrict" onchange="renderVendors()">
+    <select class="filter-select" id="vendorDistrict" onchange="vendorPage=1;renderVendors()">
       <option value="">全部区域</option>
       <option value="福田区">福田区</option>
       <option value="罗湖区">罗湖区</option>
@@ -432,7 +432,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <option value="坪山区">坪山区</option>
       <option value="光明区">光明区</option>
     </select>
-    <select class="filter-select" id="vendorSort" onchange="renderVendors()">
+    <select class="filter-select" id="vendorSort" onchange="vendorPage=1;renderVendors()">
       <option value="fail-desc">按不合格数排序</option>
       <option value="rate-asc">按合格率排序（低到高）</option>
     </select>
@@ -448,14 +448,19 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   <h1 class="section-title" style="font-size:1.5rem;margin-bottom:1rem">📋 README</h1>
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-body">
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据来源</h3>
-      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">本站数据来源于<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局</a>公开发布的食用农产品质量安全监督抽检结果通告。所有数据均为官方公开信息，本站仅做汇总整理。</p>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据范围</h3>
-      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">收录 2024 年至今深圳市市场监督管理局发布的全部食用农产品质量安全监督抽检结果通告，涵盖种植业产品、畜禽产品、水产品三大类。</p>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">数据准确性声明</h3>
-      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8;margin-bottom:1rem">原始通告附件多为扫描件/图片格式，本站数据经 OCR 自动识别整理，<b>因技术原因部分数据可能存在偏差或不准确</b>。如需精确数据，请以官方通告原文为准。</p>
-      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem">更新频率</h3>
-      <p style="font-size:0.875rem;color:var(--gray-600);line-height:1.8">数据定期自动更新，通常在官方发布新通告后 1-3 个工作日内同步。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:#fff">数据说明</h3>
+      <p style="font-size:0.875rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem">本平台数据来源于深圳市市场监督管理局公开发布的食品安全抽检通告（2024年至今），通过公开渠道收集整理，供社会公众参考使用。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:#fff">功能指引</h3>
+      <p style="font-size:0.875rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem">
+        数据一览：查看整体合格率趋势及最新通告动态<br>
+        品种统计：按商品类别展示历史抽检不合格记录排名<br>
+        商户统计：按行政区划展示受检单位抽检情况<br>
+        查找：支持按商品名称或商户名称检索历史抽检记录
+      </p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:#fff">数据准确性声明</h3>
+      <p style="font-size:0.875rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem">原始通告附件多为扫描件或图片格式，经自动化识别处理，可能存在技术性误差。如需精确数据，请以深圳市市场监督管理局官方通告原文为准。</p>
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:#fff">更新频率</h3>
+      <p style="font-size:0.875rem;color:var(--text-dim);line-height:1.8">数据跟随官方通告发布同步更新，通常在官方发布新通告后1-3个工作日内完成数据同步。</p>
     </div>
   </div>
 </div>
@@ -466,8 +471,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <!-- Footer -->
 <footer class="footer">
   <div class="container footer-inner">
-    <p><img src="images/smq-logo-01.png" alt="SMQ" style="height:20px;width:auto;vertical-align:middle;margin-right:6px"> 深圳农产品质量安全监测 · 赛博数据看板</p>
-    <p>数据来源：<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局公开通告</a> · 收录 2024 年至今历史累计数据，仅供参考 · 经自动识别整理，部分数据可能有误，请以官方原文为准</p>
+    <p><img src="images/smq-logo-01.png" alt="SMQ" style="height:36px;width:auto;vertical-align:middle;margin-right:8px;border-radius:8px;padding:4px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2)"> 深圳农产品质量安全监测</p>
+    <p>数据来源：<a href="https://amr.sz.gov.cn/xxgk/qt/ztlm/ncpzlaqjg/jdcc/" target="_blank">深圳市市场监督管理局公开通告</a> · 更新于 2026-06-28</p>
   </div>
 </footer>
 
@@ -40068,7 +40073,7 @@ function initChart(){
       maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'合格率: '+c.parsed.y+'%'}}},
       scales:{
-        y:{min:90,max:100.5,grid:{color:'rgba(0,240,255,0.05)'},ticks:{callback:v=>v+'%',color:'#8a8aaa'}},
+        y:{min:90,max:100,grid:{color:'rgba(0,240,255,0.05)'},ticks:{callback:v=>v+'%',color:'#8a8aaa'}},
         x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45,color:'#8a8aaa'}}
       },
       animation:{
@@ -40151,6 +40156,8 @@ window.goReportPage = function(p){
 };
 
 // ===================== PRODUCTS =====================
+let productPage = 1;
+const PRODUCT_PAGE_SIZE = 20;
 function renderProducts(){
   const sort = document.getElementById('productSort').value;
   const filter = document.getElementById('productFilter').value;
@@ -40160,12 +40167,17 @@ function renderProducts(){
   else if(sort==='rate-asc') data.sort((a,b)=>a.rate-b.rate);
   else if(sort==='total-desc') data.sort((a,b)=>b.total-a.total);
 
-  document.getElementById('productList').innerHTML = data.map((p,i)=>`
+  const total = data.length;
+  const totalPages = Math.ceil(total / PRODUCT_PAGE_SIZE);
+  const start = (productPage - 1) * PRODUCT_PAGE_SIZE;
+  const pageData = data.slice(start, start + PRODUCT_PAGE_SIZE);
+
+  let html = pageData.map((p,i)=>`
     <div class="rank-item">
-      <div class="rank-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="rank-num ${start+i<3?'top3':''}">${start+i+1}</div>
       <div class="rank-info">
         <div class="rank-name">${p.name}</div>
-        <div class="rank-meta">${p.category} · 累计抽检 ${p.total} 批次</div>
+        <div class="rank-meta">${p.category||''}${p.category?' · ':''}累计抽检 ${p.total} 批次</div>
       </div>
       <div class="rank-stats">
         <div class="rank-stat"><div>不合格数</div><div class="red">${p.fail}</div></div>
@@ -40173,9 +40185,27 @@ function renderProducts(){
       </div>
     </div>
   `).join('');
+
+  if(totalPages > 1){
+    html += '<div class="pagination" style="margin-top:1rem"><span style="color:var(--text-muted);font-size:0.8rem">共 '+total+' 条，第 '+productPage+'/'+totalPages+' 页</span><div class="page-btns">';
+    html += '<button class="page-btn" onclick="productPage=Math.max(1,productPage-1);renderProducts();" '+(productPage<=1?'disabled':'')+'>上一页</button>';
+    for(let i=1;i<=totalPages;i++){
+      if(i===1 || i===totalPages || (i>=productPage-2 && i<=productPage+2)){
+        html += '<button class="page-btn '+(i===productPage?'active':'')+'" onclick="productPage='+i+';renderProducts();">'+i+'</button>';
+      } else if(i===productPage-3 || i===productPage+3){
+        html += '<span style="color:var(--text-muted);padding:0 4px">...</span>';
+      }
+    }
+    html += '<button class="page-btn" onclick="productPage=Math.min('+totalPages+',productPage+1);renderProducts();" '+(productPage>=totalPages?'disabled':'')+'>下一页</button>';
+    html += '</div></div>';
+  }
+
+  document.getElementById('productList').innerHTML = html;
 }
 
 // ===================== VENDORS =====================
+let vendorPage = 1;
+const VENDOR_PAGE_SIZE = 20;
 function renderVendors(){
   const district = document.getElementById('vendorDistrict').value;
   const sort = document.getElementById('vendorSort').value;
@@ -40184,12 +40214,17 @@ function renderVendors(){
   if(sort==='fail-desc') data.sort((a,b)=>b.fail-a.fail);
   else if(sort==='rate-asc') data.sort((a,b)=>a.rate-b.rate);
 
-  document.getElementById('vendorList').innerHTML = data.map((v,i)=>`
+  const total = data.length;
+  const totalPages = Math.ceil(total / VENDOR_PAGE_SIZE);
+  const start = (vendorPage - 1) * VENDOR_PAGE_SIZE;
+  const pageData = data.slice(start, start + VENDOR_PAGE_SIZE);
+
+  let html = pageData.map((v,i)=>`
     <div class="rank-item">
-      <div class="rank-num ${i<3?'top3':''}">${i+1}</div>
+      <div class="rank-num ${start+i<3?'top3':''}">${start+i+1}</div>
       <div class="rank-info">
         <div class="rank-name">${v.name}</div>
-        <div class="rank-meta">${v.district} · 累计抽检 ${v.total} 批次</div>
+        <div class="rank-meta">${v.district||''}${v.district?' · ':''}累计抽检 ${v.total} 批次</div>
       </div>
       <div class="rank-stats">
         <div class="rank-stat"><div>不合格数</div><div class="red">${v.fail}</div></div>
@@ -40197,6 +40232,22 @@ function renderVendors(){
       </div>
     </div>
   `).join('');
+
+  if(totalPages > 1){
+    html += '<div class="pagination" style="margin-top:1rem"><span style="color:var(--text-muted);font-size:0.8rem">共 '+total+' 条，第 '+vendorPage+'/'+totalPages+' 页</span><div class="page-btns">';
+    html += '<button class="page-btn" onclick="vendorPage=Math.max(1,vendorPage-1);renderVendors();" '+(vendorPage<=1?'disabled':'')+'>上一页</button>';
+    for(let i=1;i<=totalPages;i++){
+      if(i===1 || i===totalPages || (i>=vendorPage-2 && i<=vendorPage+2)){
+        html += '<button class="page-btn '+(i===vendorPage?'active':'')+'" onclick="vendorPage='+i+';renderVendors();">'+i+'</button>';
+      } else if(i===vendorPage-3 || i===vendorPage+3){
+        html += '<span style="color:var(--text-muted);padding:0 4px">...</span>';
+      }
+    }
+    html += '<button class="page-btn" onclick="vendorPage=Math.min('+totalPages+',vendorPage+1);renderVendors();" '+(vendorPage>=totalPages?'disabled':'')+'>下一页</button>';
+    html += '</div></div>';
+  }
+
+  document.getElementById('vendorList').innerHTML = html;
 }
 
 // ===================== SEARCH =====================
