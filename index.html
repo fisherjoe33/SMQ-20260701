@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深圳食安抽检数据公示</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a5f3f;
+            --primary-light: #2d8a5e;
+            --accent: #e8b923;
+            --danger: #d32f2f;
+            --warning: #f57c00;
+            --success: #388e3c;
+            --bg: #f5f7fa;
+            --card-bg: #fff;
+            --text: #333;
+            --text-secondary: #666;
+            --border: #e0e4e8;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+        .stat-card.danger::after { background: var(--danger); }
+        .stat-card.warning::after { background: var(--warning); }
+        .stat-card.success::after { background: var(--success); }
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .stat-card.danger .stat-value { color: var(--danger); }
+        .stat-card.warning .stat-value { color: var(--warning); }
+        .stat-card.success .stat-value { color: var(--success); }
+        .stat-delta {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        .stat-delta.up { color: var(--danger); }
+        .stat-delta.down { color: var(--success); }
+        .chart-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        .chart-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .controls {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+        }
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .filter-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .filter-group select {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .table-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .table-header h2 {
+            font-size: 1.1rem;
+        }
+        .table-header .count {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.9rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            white-space: nowrap;
+        }
+        th:hover {
+            background: #edf2f7;
+        }
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.3;
+            font-size: 0.75rem;
+        }
+        th.sort-asc::after { content: ' ▲'; opacity: 1; }
+        th.sort-desc::after { content: ' ▼'; opacity: 1; }
+        td {
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+        td.title-cell {
+            max-width: 400px;
+        }
+        td.title-cell a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        td.title-cell a:hover {
+            text-decoration: underline;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-success { background: #e8f5e9; color: var(--success); }
+        .badge-warning { background: #fff3e0; color: var(--warning); }
+        .badge-danger { background: #ffebee; color: var(--danger); }
+        .rate-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .rate-bar .bar {
+            width: 60px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .rate-bar .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .pagination {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .page-buttons {
+            display: flex;
+            gap: 0.3rem;
+        }
+        .page-btn {
+            padding: 0.4rem 0.7rem;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.4rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 1.5rem; }
+            .controls { flex-direction: column; align-items: stretch; }
+            th, td { padding: 0.6rem 0.5rem; font-size: 0.8rem; }
+            td.title-cell { max-width: 200px; }
+            .rate-bar .bar { width: 40px; }
+            .chart-container { height: 220px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ 深圳市食用农产品质量安全监督抽检数据</h1>
+        <p>数据来源于深圳市市场监督管理局官方通告，实时更新</p>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="chart-section">
+            <h2>📊 合格率趋势</h2>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索通告标题、日期...">
+            </div>
+            <div class="filter-group">
+                <label>年份:</label>
+                <select id="yearFilter">
+                    <option value="">全部</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>合格率:</label>
+                <select id="rateFilter">
+                    <option value="">全部</option>
+                    <option value="high">≥98%</option>
+                    <option value="mid">95%-98%</option>
+                    <option value="low"><95%</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h2>📋 抽检通告明细</h2>
+                <span class="count" id="resultCount">共 0 条</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-col="title">通告标题</th>
+                            <th class="sortable" data-col="date">日期</th>
+                            <th class="sortable" data-col="total" style="text-align:right">抽检数</th>
+                            <th class="sortable" data-col="fail" style="text-align:right">不合格</th>
+                            <th class="sortable" data-col="rate" style="text-align:right">合格率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 深圳市市场监督管理局 · 数据仅供参考，以官方通告为准</p>
+    </div>
+
+    <script>
+    const rawData = [
+        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2026-06-25",total:2615,fail:71,rate:97.28},
+        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2026-06-08",total:2305,fail:86,rate:96.27},
+        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2026-05-09",total:2844,fail:72,rate:97.47},
+        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2026-04-02",total:2566,fail:101,rate:96.06},
+        {title:"深圳市市场监督管理局关于2026年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2026-02-24",total:803,fail:32,rate:96.01},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2025-12-24",total:1032,fail:40,rate:96.12},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2025-11-18",total:1876,fail:36,rate:98.08},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2025-10-27",total:3064,fail:52,rate:98.30},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2025-09-19",total:4010,fail:58,rate:98.55},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2025-09-02",total:7060,fail:90,rate:98.73},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2025-08-01",total:3260,fail:33,rate:98.99},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2025-07-09",total:685,fail:16,rate:97.66},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2025-05-26",total:191,fail:7,rate:96.34},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2025-05-06",total:1967,fail:49,rate:97.51},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2025-03-06",total:329,fail:13,rate:96.05},
+        {title:"深圳市市场监督管理局关于2025年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2025-01-21",total:985,fail:30,rate:96.95},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第14期）",date:"2025-01-13",total:758,fail:19,rate:97.49},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第13期）",date:"2024-12-19",total:945,fail:37,rate:96.08},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第12期）",date:"2024-12-10",total:1063,fail:42,rate:96.05},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第11期）",date:"2024-11-25",total:556,fail:15,rate:97.30},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第10期）",date:"2024-11-15",total:1090,fail:43,rate:96.06},
+        {title:"深圳市市场监督管理局关于2024年传统节日食用农产品\"你点我检、服务惠民生\"监督抽检结果的通告",date:"2024-10-29",total:57,fail:0,rate:100.00},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第9期）",date:"2024-10-17",total:469,fail:13,rate:97.23},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第8期）",date:"2024-10-12",total:440,fail:14,rate:96.82},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第7期）",date:"2024-09-18",total:663,fail:20,rate:96.98},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第6期）",date:"2024-09-02",total:938,fail:24,rate:97.44},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第5期）",date:"2024-08-26",total:871,fail:35,rate:95.98},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第4期）",date:"2024-08-09",total:799,fail:34,rate:95.74},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第3期）",date:"2024-07-30",total:1726,fail:72,rate:95.83},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第2期）",date:"2024-07-17",total:1426,fail:60,rate:95.79},
+        {title:"深圳市市场监督管理局关于2024年食用农产品质量安全监督抽检结果的通告（第1期）",date:"2024-06-07",total:3175,fail:78,rate:97.54},
+    ];
+
+    let filteredData = [...rawData];
+    let sortCol = 'date';
+    let sortDesc = true;
+    let currentPage = 1;
+    const pageSize = 10;
+
+    function renderStats() {
+        const total = rawData.reduce((s,d)=>s+d.total,0);
+        const fail = rawData.reduce((s,d)=>s+d.fail,0);
+        const avgRate = (rawData.reduce((s,d)=>s+d.rate,0)/rawData.length).toFixed(2);
+        const latest = rawData[0];
+
+        const grid = document.getElementById('statsGrid');
+        grid.innerHTML = `
+            <div class="stat-card success">
+                <div class="stat-label">累计抽检批次</div>
+                <div class="stat-value">${total.toLocaleString()}</div>
+                <div class="stat-delta">覆盖 ${rawData.length} 期通告</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">不合格批次</div>
+                <div class="stat-value">${fail.toLocaleString()}</div>
+                <div class="stat-delta">不合格率 ${(fail/total*100).toFixed(2)}%</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">平均合格率</div>
+                <div class="stat-value">${avgRate}%</div>
+                <div class="stat-delta">历史平均水平</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">最新一期 (${latest.date})</div>
+                <div class="stat-value">${latest.rate}%</div>
+                <div class="stat-delta">抽检 ${latest.total} 批次</div>
+            </div>
+        `;
+    }
+
+    function renderChart() {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        const labels = rawData.map(d=>d.date).reverse();
+        const rates = rawData.map(d=>d.rate).reverse();
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '合格率 (%)',
+                    data: rates,
+                    borderColor: '#1a5f3f',
+                    backgroundColor: 'rgba(26,95,63,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `合格率: ${ctx.parsed.y}%`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 90,
+                        max: 100,
+                        grid: { color: '#f0f0f0' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    function getBarColor(rate) {
+        if (rate >= 98) return '#388e3c';
+        if (rate >= 96) return '#f57c00';
+        return '#d32f2f';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const start = (currentPage-1)*pageSize;
+        const pageData = filteredData.slice(start, start+pageSize);
+
+        tbody.innerHTML = pageData.map((d,i) => {
+            const idx = start+i+1;
+            const barColor = getBarColor(d.rate);
+            let badgeClass = 'badge-success';
+            if (d.rate < 96) badgeClass = 'badge-danger';
+            else if (d.rate < 98) badgeClass = 'badge-warning';
+
+            return `<tr>
+                <td class="title-cell">${idx}. ${d.title}</td>
+                <td>${d.date}</td>
+                <td style="text-align:right">${d.total.toLocaleString()}</td>
+                <td style="text-align:right">${d.fail.toLocaleString()}</td>
+                <td style="text-align:right">
+                    <div class="rate-bar">
+                        <span class="badge ${badgeClass}">${d.rate}%</span>
+                        <div class="bar"><div class="bar-fill" style="width:${d.rate}%;background:${barColor}"></div></div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('resultCount').textContent = `共 ${filteredData.length} 条`;
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(filteredData.length/pageSize);
+        const container = document.getElementById('pagination');
+        if (totalPages <= 1) { container.innerHTML=''; return; }
+
+        let html = `<div class="page-buttons">`;
+        html += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>上一页</button>`;
+        for (let i=1;i<=totalPages;i++) {
+            if (i===1||i===totalPages||(i>=currentPage-2&&i<=currentPage+2)) {
+                html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+            } else if (i===currentPage-3||i===currentPage+3) {
+                html += `<span style="padding:0.4rem">...</span>`;
+            }
+        }
+        html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>下一页</button>`;
+        html += `</div><span style="font-size:0.85rem;color:#666">第 ${currentPage}/${totalPages} 页</span>`;
+        container.innerHTML = html;
+    }
+
+    window.goPage = function(p) {
+        const total = Math.ceil(filteredData.length/pageSize);
+        if (p<1||p>total) return;
+        currentPage = p;
+        renderTable();
+        window.scrollTo({top: document.querySelector('.table-section').offsetTop-20, behavior:'smooth'});
+    };
+
+    function applySort() {
+        filteredData.sort((a,b)=>{
+            let av = a[sortCol], bv = b[sortCol];
+            if (sortCol==='title') { av=a.title; bv=b.title; }
+            if (typeof av==='string') {
+                return sortDesc ? bv.localeCompare(av) : av.localeCompare(bv);
+            }
+            return sortDesc ? bv-av : av-bv;
+        });
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const year = document.getElementById('yearFilter').value;
+        const rate = document.getElementById('rateFilter').value;
+
+        filteredData = rawData.filter(d => {
+            if (q && !d.title.toLowerCase().includes(q) && !d.date.includes(q)) return false;
+            if (year && !d.date.startsWith(year)) return false;
+            if (rate==='high' && d.rate<98) return false;
+            if (rate==='mid' && (d.rate<95||d.rate>=98)) return false;
+            if (rate==='low' && d.rate>=95) return false;
+            return true;
+        });
+
+        applySort();
+        currentPage = 1;
+        renderTable();
+    }
+
+    document.querySelectorAll('th.sortable').forEach(th=>{
+        th.addEventListener('click',()=>{
+            const col = th.dataset.col;
+            if (sortCol===col) sortDesc=!sortDesc;
+            else { sortCol=col; sortDesc=true; }
+            document.querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+            th.classList.add(sortDesc?'sort-desc':'sort-asc');
+            applySort();
+            renderTable();
+        });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('yearFilter').addEventListener('change', applyFilters);
+    document.getElementById('rateFilter').addEventListener('change', applyFilters);
+
+    // init
+    renderStats();
+    renderChart();
+    applySort();
+    renderTable();
+    </script>
+</body>
+</html>
